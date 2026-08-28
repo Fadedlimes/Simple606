@@ -107,14 +107,16 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
 
     // --- SEQUENCER TAB ---
     transportToggleBtn.setButtonText("START");
+    transportToggleBtn.setComponentID("transport");
     transportToggleBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff22c55e));
     transportToggleBtn.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
     transportToggleBtn.onClick = [this]()
     {
-        bool playing = !audioProcessor.seqIsPlaying.load();
+        bool playing = !(audioProcessor.seqIsPlaying.load() || audioProcessor.isDawPlaying.load());
         audioProcessor.seqIsPlaying.store(playing);
         transportToggleBtn.setButtonText(playing ? "STOP" : "START");
         transportToggleBtn.setColour(juce::TextButton::buttonColourId, playing ? juce::Colour(0xffef4444) : juce::Colour(0xff22c55e));
+        transportToggleBtn.repaint();
     };
     addAndMakeVisible(transportToggleBtn);
 
@@ -378,39 +380,39 @@ void Super606AudioProcessorEditor::updateThemeColors()
 
     switch (themeIdx)
     {
-        case 1: // 1: ELECTRIC BLUE
+        case 1:
             customLookAndFeel.mainGlowColour = juce::Colour(0xff60a5fa);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xff2563eb);
             break;
-        case 2: // 2: TR RED (Authentic Roland TR bright red LED)
+        case 2:
             customLookAndFeel.mainGlowColour = juce::Colour(0xffff3b30);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xffdc2626);
             break;
-        case 3: // 3: SUNSET YELLOW (Warm golden-orange yellow)
+        case 3:
             customLookAndFeel.mainGlowColour = juce::Colour(0xfffacc15);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xffd97706);
             break;
-        case 4: // 4: AMBER CRT (Monochrome terminal phosphor amber)
+        case 4:
             customLookAndFeel.mainGlowColour = juce::Colour(0xfffb923c);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xffea580c);
             break;
-        case 5: // 5: ACID GREEN
+        case 5:
             customLookAndFeel.mainGlowColour = juce::Colour(0xff4ade80);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xff16a34a);
             break;
-        case 6: // 6: CYBER TEAL (AudioKit Neon Teal)
+        case 6:
             customLookAndFeel.mainGlowColour = juce::Colour(0xff2dd4bf);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xff0d9488);
             break;
-        case 7: // 7: HOT PINK
+        case 7:
             customLookAndFeel.mainGlowColour = juce::Colour(0xfff472b6);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xffdb2777);
             break;
-        case 8: // 8: TRANS PRIDE (Cyan & Pink with White core)
+        case 8:
             customLookAndFeel.mainGlowColour = juce::Colour(0xff5bcefa);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xfff5a9b8);
             break;
-        default: // 0: NEON VIOLET (Default Signature Purple)
+        default:
             customLookAndFeel.mainGlowColour = juce::Colour(0xffc084fc);
             customLookAndFeel.mainDarkGlowColour = juce::Colour(0xffa855f7);
             break;
@@ -420,11 +422,11 @@ void Super606AudioProcessorEditor::updateThemeColors()
     int accIdx = accParam != nullptr ? static_cast<int>(accParam->load()) : 0;
     switch (accIdx)
     {
-        case 1: customLookAndFeel.accentTrackColour = juce::Colour(0xffeab308); break; // Yellow
-        case 2: customLookAndFeel.accentTrackColour = juce::Colour(0xffef4444); break; // Red
-        case 3: customLookAndFeel.accentTrackColour = juce::Colour(0xffffffff); break; // White
-        case 4: customLookAndFeel.accentTrackColour = juce::Colour(0xffc084fc); break; // Purple
-        default: customLookAndFeel.accentTrackColour = juce::Colour(0xfff97316); break; // Orange
+        case 1: customLookAndFeel.accentTrackColour = juce::Colour(0xffeab308); break;
+        case 2: customLookAndFeel.accentTrackColour = juce::Colour(0xffef4444); break;
+        case 3: customLookAndFeel.accentTrackColour = juce::Colour(0xffffffff); break;
+        case 4: customLookAndFeel.accentTrackColour = juce::Colour(0xffc084fc); break;
+        default: customLookAndFeel.accentTrackColour = juce::Colour(0xfff97316); break;
     }
 
     trackLabels[0].setColour(juce::Label::textColourId, customLookAndFeel.accentTrackColour);
@@ -433,6 +435,12 @@ void Super606AudioProcessorEditor::updateThemeColors()
 void Super606AudioProcessorEditor::timerCallback()
 {
     updateThemeColors();
+
+    bool isPlaying = audioProcessor.seqIsPlaying.load() || audioProcessor.isDawPlaying.load();
+    transportToggleBtn.setButtonText(isPlaying ? "STOP" : "START");
+    transportToggleBtn.setColour(juce::TextButton::buttonColourId, isPlaying ? juce::Colour(0xffef4444) : juce::Colour(0xff22c55e));
+    transportToggleBtn.repaint();
+
     if (currentTab == Tab::Sequencer)
         repaint();
 }
@@ -451,10 +459,11 @@ bool Super606AudioProcessorEditor::keyPressed(const juce::KeyPress& key)
     else if (keyChar == 'j' || keyChar == '7' || keyChar == 'm') voiceToTrigger = 6;
     else if (key.isKeyCurrentlyDown(juce::KeyPress::spaceKey))
     {
-        bool playing = !audioProcessor.seqIsPlaying.load();
+        bool playing = !(audioProcessor.seqIsPlaying.load() || audioProcessor.isDawPlaying.load());
         audioProcessor.seqIsPlaying.store(playing);
         transportToggleBtn.setButtonText(playing ? "STOP" : "START");
         transportToggleBtn.setColour(juce::TextButton::buttonColourId, playing ? juce::Colour(0xffef4444) : juce::Colour(0xff22c55e));
+        transportToggleBtn.repaint();
         return true;
     }
 

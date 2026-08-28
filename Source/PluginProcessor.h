@@ -306,6 +306,7 @@ public:
     std::atomic<bool> stepPattern[8][64];
     std::atomic<int> currentSeqStep { 0 };
     std::atomic<bool> seqIsPlaying { false };
+    std::atomic<bool> isDawPlaying { false };
 
     juce::AudioProcessorValueTreeState apvts;
 
@@ -396,6 +397,7 @@ private:
 
     double sampleRate_ = 44100.0;
     double seqSampleCounter_ = 0.0;
+    int lastTimelineStep_ = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Super606AudioProcessor)
 };

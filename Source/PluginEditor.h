@@ -149,6 +149,13 @@ public:
                                                                                                   g.setColour(button.getToggleState() ? juce::Colour(0xff111215) : juce::Colour(0xfff0f2f5));
                                                                                                   g.drawText(txt, button.getLocalBounds(), juce::Justification::centred, false);
                                                                                               }
+                                                                                              else if (button.getComponentID() == "transport" || txt == "START" || txt == "STOP")
+                                                                                              {
+                                                                                                  // Crisp, high-contrast bold white text on the transport button
+                                                                                                  g.setFont(juce::Font(11.5f, juce::Font::bold));
+                                                                                                  g.setColour(juce::Colours::white);
+                                                                                                  g.drawText(txt, button.getLocalBounds(), juce::Justification::centred, false);
+                                                                                              }
                                                                                               else
                                                                                               {
                                                                                                   LookAndFeel_V4::drawButtonText(g, button, shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
@@ -164,6 +171,7 @@ public:
                                                                                                                         const bool isMute = (txt == "M");
                                                                                                                         const bool isSolo = (txt == "S");
                                                                                                                         const bool isPad  = button.getComponentID() == "drumpad";
+                                                                                                                        const bool isTransport = (button.getComponentID() == "transport" || txt == "START" || txt == "STOP");
 
                                                                                                                         if (isTab)
                                                                                                                         {
@@ -194,6 +202,26 @@ public:
                                                                                                                                 g.drawRoundedRectangle(bounds, 6.0f, 1.2f);
                                                                                                                             }
                                                                                                                         }
+                                                                                                                        else if (isTransport)
+                                                                                                                        {
+                                                                                                                            // Responsive illuminated green/red transport state
+                                                                                                                            auto baseCol = button.findColour(juce::TextButton::buttonColourId);
+                                                                                                                            if (shouldDrawButtonAsDown)
+                                                                                                                            {
+                                                                                                                                g.setColour(baseCol.brighter(0.2f));
+                                                                                                                                g.fillRoundedRectangle(bounds, 4.0f);
+                                                                                                                            }
+                                                                                                                            else
+                                                                                                                            {
+                                                                                                                                juce::ColourGradient tGrad(shouldDrawButtonAsHighlighted ? baseCol.brighter(0.15f) : baseCol,
+                                                                                                                                                           bounds.getX(), bounds.getY(),
+                                                                                                                                                           baseCol.darker(0.25f), bounds.getX(), bounds.getBottom(), false);
+                                                                                                                                g.setGradientFill(tGrad);
+                                                                                                                                g.fillRoundedRectangle(bounds, 4.0f);
+                                                                                                                            }
+                                                                                                                            g.setColour(juce::Colour(0xff181a1f));
+                                                                                                                            g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
+                                                                                                                        }
                                                                                                                         else if (isMute || isSolo)
                                                                                                                         {
                                                                                                                             bool isOn = button.getToggleState();
@@ -213,6 +241,8 @@ public:
                                                                                                                         }
                                                                                                                         else
                                                                                                                         {
+                                                                                                                            // Standard Buttons (CLEAR, COPY, PASTE, etc.)
+                                                                                                                            auto baseCol = button.findColour(juce::TextButton::buttonColourId);
                                                                                                                             if (shouldDrawButtonAsDown)
                                                                                                                             {
                                                                                                                                 g.setColour(mainGlowColour);
@@ -222,9 +252,10 @@ public:
                                                                                                                             }
                                                                                                                             else
                                                                                                                             {
-                                                                                                                                juce::ColourGradient bGrad(shouldDrawButtonAsHighlighted ? juce::Colour(0xff555963) : juce::Colour(0xff444750),
-                                                                                                                                                           bounds.getX(), bounds.getY(),
-                                                                                                                                                           juce::Colour(0xff292b31), bounds.getX(), bounds.getBottom(), false);
+                                                                                                                                juce::Colour topCol = shouldDrawButtonAsHighlighted ? baseCol.brighter(0.15f) : baseCol;
+                                                                                                                                juce::Colour botCol = baseCol.darker(0.30f);
+                                                                                                                                juce::ColourGradient bGrad(topCol, bounds.getX(), bounds.getY(),
+                                                                                                                                                           botCol, bounds.getX(), bounds.getBottom(), false);
                                                                                                                                 g.setGradientFill(bGrad);
                                                                                                                                 g.fillRoundedRectangle(bounds, 4.0f);
                                                                                                                                 g.setColour(juce::Colour(0xff181a1f));

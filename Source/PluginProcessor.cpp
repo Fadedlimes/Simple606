@@ -81,7 +81,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Super606AudioProcessor::crea
     // 12-Bit Crunch Mode
     layout.add(std::make_unique<juce::AudioParameterBool>(juce::ParameterID("global_12bit", 1), "12-Bit Mode", false));
 
-    // 9 Expanded Themes
+    // Themes & Settings
     juce::StringArray themeNames = {
         "NEON VIOLET",
         "ELECTRIC BLUE",
@@ -202,6 +202,7 @@ void Super606AudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBl
 {
     sampleRate_ = sampleRate;
     seqSampleCounter_ = 0.0;
+    lastTimelineStep_ = -1;
 
     bassDrum.init(sampleRate);
     clap.init(sampleRate);
@@ -244,8 +245,11 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     auto midiIterator = midiMessages.findNextSamplePosition(0);
 
     double bpm = seqBpmParam != nullptr ? static_cast<double>(seqBpmParam->load()) : 120.0;
-    bool isDawPlaying = false;
+    bool dawPlaying = false;
+    double currentPpq = 0.0;
+    bool hasPpq = false;
 
+    // 1. Read Host Transport & Timeline Position
     if (auto* playHead = getPlayHead())
     {
         if (auto posOpt = playHead->getPosition())
@@ -253,13 +257,18 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             if (auto b = posOpt->getBpm())
                 bpm = *b;
 
-            isDawPlaying = posOpt->getIsPlaying();
+            dawPlaying = posOpt->getIsPlaying();
+
+            if (auto ppqOpt = posOpt->getPpqPosition())
+            {
+                currentPpq = *ppqOpt;
+                hasPpq = true;
+            }
         }
     }
+    isDawPlaying.store(dawPlaying);
 
     const double samplesPer16th = (sampleRate_ * 60.0) / (std::max(20.0, bpm) * 4.0);
-    const bool activePlayback = seqIsPlaying.load() || isDawPlaying;
-
     int lengthIndex = seqLengthParam != nullptr ? static_cast<int>(seqLengthParam->load()) : 0;
     const int maxSteps = (lengthIndex + 1) * 16;
 
@@ -336,41 +345,27 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
         for (int sample = 0; sample < totalNumSamples; ++sample)
         {
-            // 1. Sequencer Clock
-            if (activePlayback)
-            {
-                seqSampleCounter_ += 1.0;
-                if (seqSampleCounter_ >= samplesPer16th)
-                {
-                    seqSampleCounter_ -= samplesPer16th;
-                    int nextStep = (currentSeqStep.load() + 1) % maxSteps;
-                    currentSeqStep.store(nextStep);
-
-                    bool accented = stepPattern[0][nextStep].load();
-
-                    for (int track = 0; track < 7; ++track)
-                    {
-                        if (stepPattern[track + 1][nextStep].load())
-                            fireVoice(track, accented);
-                    }
-                }
-            }
-
-            // 2. Manual UI Triggers
-            for (int track = 0; track < 7; ++track)
-            {
-                if (manualTrigger[track].exchange(false))
-                {
-                    bool acc = manualTriggerAccent[track].exchange(false);
-                    fireVoice(track, acc);
-                }
-            }
-
-            // 3. MIDI Notes
+            // 2. MIDI Real-Time Transport Commands (Start / Stop / Continue)
             for (; midiIterator != midiMessages.end() && (*midiIterator).samplePosition == sample; ++midiIterator)
             {
                 auto message = (*midiIterator).getMessage();
-                if (message.isNoteOn())
+
+                if (message.isMidiStart())
+                {
+                    seqIsPlaying.store(true);
+                    currentSeqStep.store(0);
+                    seqSampleCounter_ = 0.0;
+                    lastTimelineStep_ = -1;
+                }
+                else if (message.isMidiStop())
+                {
+                    seqIsPlaying.store(false);
+                }
+                else if (message.isMidiContinue())
+                {
+                    seqIsPlaying.store(true);
+                }
+                else if (message.isNoteOn())
                 {
                     const int note = message.getNoteNumber();
                     bool accented = message.getVelocity() > 100;
@@ -384,7 +379,64 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                 }
             }
 
-            // 4. Synthesize voices
+            // 3. Sequencer Clock (Locked to DAW Timeline or Internal Clock)
+            if (dawPlaying && hasPpq)
+            {
+                // Sample-accurate song position lock to DAW grid
+                double sampleFraction = static_cast<double>(sample) / static_cast<double>(totalNumSamples);
+                double exactPpq = currentPpq + (sampleFraction * totalNumSamples / sampleRate_) * (bpm / 60.0);
+                int step = static_cast<int>(std::floor(exactPpq * 4.0));
+                if (step < 0) step = 0;
+                step = step % maxSteps;
+
+                if (step != lastTimelineStep_)
+                {
+                    lastTimelineStep_ = step;
+                    currentSeqStep.store(step);
+
+                    bool accented = stepPattern[0][step].load();
+                    for (int track = 0; track < 7; ++track)
+                    {
+                        if (stepPattern[track + 1][step].load())
+                            fireVoice(track, accented);
+                    }
+                }
+            }
+            else if (seqIsPlaying.load())
+            {
+                // Internal Clock (Standalone or unlinked playback)
+                seqSampleCounter_ += 1.0;
+                if (seqSampleCounter_ >= samplesPer16th)
+                {
+                    seqSampleCounter_ -= samplesPer16th;
+                    int nextStep = (currentSeqStep.load() + 1) % maxSteps;
+                    currentSeqStep.store(nextStep);
+
+                    bool accented = stepPattern[0][nextStep].load();
+                    for (int track = 0; track < 7; ++track)
+                    {
+                        if (stepPattern[track + 1][nextStep].load())
+                            fireVoice(track, accented);
+                    }
+                }
+            }
+            else
+            {
+                lastTimelineStep_ = -1;
+                seqSampleCounter_ = 0.0;
+            }
+
+            // 4. Manual UI Triggers
+            for (int track = 0; track < 7; ++track)
+            {
+                if (manualTrigger[track].exchange(false))
+                {
+                    bool acc = manualTriggerAccent[track].exchange(false);
+                    fireVoice(track, acc);
+                }
+            }
+
+            // 5. Synthesize voices
             float v[7];
             v[0] = bassDrum.process();
 
