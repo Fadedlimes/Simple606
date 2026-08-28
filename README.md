@@ -6,7 +6,7 @@ An intuitive, fully synthesized analog drum machine and groovebox plugin built w
 
 ## 📖 About This Project
 
-**Simple 606** is a standalone and plugin wrapper built around the open-source DSP code from Matthew Fecher's ([@AnalogMatthew](https://github.com/analogcode)) [606-Inspired-Synth-Drums](https://github.com/analogcode/606-Inspired-Synth-Drums). 
+**Simple 606** is a standalone application and VST3 plugin wrapper built around the open-source DSP code from Matthew Fecher's ([@AnalogMatthew](https://github.com/analogcode)) [606-Inspired-Synth-Drums](https://github.com/analogcode/606-Inspired-Synth-Drums). 
 
 ### Why was this made?
 This project was created so my friends and partners could have a lightweight, accessible, and simple-to-use drum synthesizer to learn beatmaking, sound design, and synthesis with—without requiring complicated DAW routing or expensive hardware.
