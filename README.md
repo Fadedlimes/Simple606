@@ -16,7 +16,7 @@ An intuitive, fully synthesized analog drum machine and groovebox plugin built w
 This project was created so my friends and partners could have a lightweight, accessible, and simple-to-use drum synthesizer to learn beatmaking, sound design, and synthesis with—without requiring complicated DAW routing or expensive hardware.
 
 ### Transparency & AI Disclosure
-In the interest of open disclosure, the JUCE wrapper, UI layout, sequencer, mixer, effects engine, and cross-platform build systems were assembled and developed with the assistance of **Gemini Flash**.
+In the interest of open disclosure, the JUCE wrapper, UI layout, sequencer, mixer, effects engine, and cross-platform build systems were assembled and developed with the assistance of **Gemini/Gemma**.
 
 ---
 
