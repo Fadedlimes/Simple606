@@ -6,6 +6,7 @@ An intuitive, fully synthesized analog drum machine and groovebox plugin built w
 <img width="958" height="417" alt="image" src="https://github.com/user-attachments/assets/6be97048-2553-4631-9785-b9aa9da67896" />
 <img width="960" height="420" alt="image" src="https://github.com/user-attachments/assets/bd6136fe-e537-4133-81ab-b07bd8c03908" />
 
+⚠️ Note: This project was originally built for Linux and with Linux in mind, so please note the Mac and Windows builds are entirely untested.
 ---
 
 ## 📖 About This Project
