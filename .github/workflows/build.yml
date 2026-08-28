@@ -1,0 +1,94 @@
+name: Build Cross-Platform Simple606
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # ==========================================
+  # 1. WINDOWS BUILD (.vst3 & .exe)
+  # ==========================================
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Compile Windows Binaries
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Simple606-Windows
+          path: |
+            build/Simple606_artefacts/Release/VST3/Simple 606.vst3
+            build/Simple606_artefacts/Release/Standalone/Simple 606.exe
+
+  # ==========================================
+  # 2. MACOS BUILD (Universal: Apple Silicon & Intel)
+  # ==========================================
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Compile macOS Binaries
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Simple606-macOS
+          path: |
+            build/Simple606_artefacts/Release/VST3/Simple 606.vst3
+            build/Simple606_artefacts/Release/Standalone/Simple 606.app
+
+  # ==========================================
+  # 3. LINUX BUILD (.vst3 & Standalone)
+  # ==========================================
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Audio & X11 Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libfreetype6-dev \
+            libgl1-mesa-dev
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Compile Linux Binaries
+        run: cmake --build build --config Release --parallel
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Simple606-Linux
+          path: |
+            build/Simple606_artefacts/Release/VST3/Simple 606.vst3
+            build/Simple606_artefacts/Release/Standalone/Simple 606
