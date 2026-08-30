@@ -25,15 +25,15 @@ In the interest of open disclosure, the JUCE wrapper, UI layout, sequencer, mixe
 
 ### 🥁 1. Analog Drum Synthesis Engine (`DRUMS`)
 - **100% Pure Synthesis:** Contains zero samples. Every drum sound is calculated mathematically in real-time.
-- **7 Classic Drum Voices:** Bass Drum, Snare Drum, Hand Clap, Closed Hi-Hat, Open Hi-Hat, Low Tom, and High Tom.
+- **8 Classic Drum Voices:** Bass Drum, Snare Drum, Hand Clap, Closed Hi-Hat, Open Hi-Hat, Cymbal, Low Tom, and High Tom.
 - **608 XL Sub Mode:** A dedicated switch on the Kick Drum that opens up the decay into a deep, booming 808-style sub-bass.
 - **Kick Heat:** Dial in subtle analog saturation specifically on the Bass Drum body.
 - **Per-Voice Stereo Panning:** Independent L/R stereo positioning for each drum voice.
 
 ### 🎮 2. Interactive Drum Pads (`PADS`)
-- 7 large, responsive velocity-sensitive drum pads.
+- 8 large, responsive velocity-sensitive drum pads.
 - **Computer Keyboard Support:** Play beats directly using your computer keyboard without needing a MIDI controller:
-  - **Home Row:** `A` (BD), `S` (SN), `D` (CL), `F` (CH), `G` (OH), `H` (LT), `J` (HT)
+  - **Home Row:** `A` (BD), `S` (SN), `D` (CL), `F` (CH), `G` (OH), `Y`(CY) `H` (LT), `J` (HT),
   - **Number Row:** `1`, `2`, `3`, `4`, `5`, `6`, `7`
   - **Bottom Row:** `Z`, `X`, `C`, `V`, `B`, `N`, `M`
   - **Spacebar:** Start / Stop Sequencer playback
@@ -46,12 +46,12 @@ In the interest of open disclosure, the JUCE wrapper, UI layout, sequencer, mixe
 - **DAW Sync or Internal Clock:** Automatically locks to your DAW host tempo or runs on internal BPM.
 
 ### 🎚️ 4. Console Mixer (`MIXER`)
-- 7 individual voice channel strips + Master Output channel.
+- 8 individual voice channel strips + Master Output channel.
 - Vintage-style aluminum vertical faders and pan dials.
 - Isolated channel **Mute** and **Solo** routing logic.
 
 ### 🎛️ 5. Modular FX Rack (`FX RACK`)
-- **3 × 7 FX Routing Matrix:** Route any individual drum voice to specific effects independently (e.g. keeping the kick dry while sending hats and claps through delay and reverb).
+- **3 × 8 FX Routing Matrix:** Route any individual drum voice to specific effects independently (e.g. keeping the kick dry while sending hats and claps through delay and reverb).
 - **Analog Warmth Overdrive:** 2nd/3rd harmonic tube saturation with warm low-mid tone shaping.
 - **Musical Stereo Delay:** Stepped rhythmic subdivisions (`1/32` to `1/2`) with true stereo **Ping-Pong** bouncing.
 - **Dattorro Plate Reverb:** 4-stage all-pass diffused reverb with selectable **`ROOM`** (tight & punchy) and **`HALL`** (lush & spacious) modes.
