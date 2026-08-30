@@ -84,8 +84,8 @@ public:
                                                     g.setColour(juce::Colour(0xff2b2e35));
                                                     g.fillRoundedRectangle(trackX, bounds.getY() + 4.0f, trackW, bounds.getHeight() - 8.0f, 2.0f);
 
-                                                    const float thumbW = 28.0f;
-                                                    const float thumbH = 14.0f;
+                                                    const float thumbW = 26.0f;
+                                                    const float thumbH = 13.0f;
                                                     auto thumbRect = juce::Rectangle<float>(bounds.getCentreX() - thumbW * 0.5f, sliderPos - thumbH * 0.5f, thumbW, thumbH);
 
                                                     g.setColour(juce::Colour(0x50000000));
@@ -151,7 +151,6 @@ public:
                                                                                               }
                                                                                               else if (button.getComponentID() == "transport" || txt == "START" || txt == "STOP")
                                                                                               {
-                                                                                                  // Crisp, high-contrast bold white text on the transport button
                                                                                                   g.setFont(juce::Font(11.5f, juce::Font::bold));
                                                                                                   g.setColour(juce::Colours::white);
                                                                                                   g.drawText(txt, button.getLocalBounds(), juce::Justification::centred, false);
@@ -204,7 +203,6 @@ public:
                                                                                                                         }
                                                                                                                         else if (isTransport)
                                                                                                                         {
-                                                                                                                            // Responsive illuminated green/red transport state
                                                                                                                             auto baseCol = button.findColour(juce::TextButton::buttonColourId);
                                                                                                                             if (shouldDrawButtonAsDown)
                                                                                                                             {
@@ -241,7 +239,6 @@ public:
                                                                                                                         }
                                                                                                                         else
                                                                                                                         {
-                                                                                                                            // Standard Buttons (CLEAR, COPY, PASTE, etc.)
                                                                                                                             auto baseCol = button.findColour(juce::TextButton::buttonColourId);
                                                                                                                             if (shouldDrawButtonAsDown)
                                                                                                                             {
@@ -376,6 +373,11 @@ private:
     juce::Label  hatsChDecayLabel,  hatsOhDecayLabel,  hatsPitchLabel,  hatsPanLabel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> hatsChDecayAtt, hatsOhDecayAtt, hatsPitchAtt, hatsPanAtt;
 
+    // 8th Voice: Crash Cymbal
+    juce::Slider cyDecaySlider, cyPitchSlider, cyPanSlider;
+    juce::Label  cyDecayLabel,  cyPitchLabel,  cyPanLabel;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> cyDecayAtt, cyPitchAtt, cyPanAtt;
+
     juce::Slider ltomDecaySlider, ltomPitchSlider, ltomPanSlider;
     juce::Label  ltomDecayLabel,  ltomPitchLabel,  ltomPanLabel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> ltomDecayAtt, ltomPitchAtt, ltomPanAtt;
@@ -384,12 +386,12 @@ private:
     juce::Label  htomDecayLabel,  htomPitchLabel,  htomPanLabel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> htomDecayAtt, htomPitchAtt, htomPanAtt;
 
-    // --- TAB 2: PADS ---
-    juce::TextButton drumPads[7];
+    // --- TAB 2: PADS (8 Pads) ---
+    juce::TextButton drumPads[8];
 
-    // --- TAB 3: SEQUENCER ---
+    // --- TAB 3: SEQUENCER (9 Tracks: ACC + 8 Voices) ---
     int seqCurrentPage = 0;
-    bool seqPageClipboard[8][16] = { { false } };
+    bool seqPageClipboard[9][16] = { { false } };
     juce::TextButton pageBtns[4];
     juce::ComboBox   seqLengthBox;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> seqLengthAtt;
@@ -399,27 +401,27 @@ private:
     juce::Label  bpmLabel;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> bpmAtt;
 
-    juce::TextButton seqMuteBtns[7], seqSoloBtns[7];
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> seqMuteAtts[7], seqSoloAtts[7];
+    juce::TextButton seqMuteBtns[8], seqSoloBtns[8];
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> seqMuteAtts[8], seqSoloAtts[8];
 
-    juce::ToggleButton stepButtons[8][16];
-    juce::Label trackLabels[8];
+    juce::ToggleButton stepButtons[9][16];
+    juce::Label trackLabels[9];
 
-    // --- TAB 4: MIXER ---
-    juce::Slider mixerFaders[7], masterFader;
-    juce::Label  mixerFaderLabels[7], masterFaderLabel;
-    juce::Slider mixerPanDials[7];
-    juce::Label  mixerPanLabels[7];
-    juce::TextButton mixerMuteBtns[7], mixerSoloBtns[7];
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixerFaderAtts[7], masterFaderAtt;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixerPanAtts[7];
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> mixerMuteAtts[7], mixerSoloAtts[7];
+    // --- TAB 4: MIXER (8 Voice Channels + Master) ---
+    juce::Slider mixerFaders[8], masterFader;
+    juce::Label  mixerFaderLabels[8], masterFaderLabel;
+    juce::Slider mixerPanDials[8];
+    juce::Label  mixerPanLabels[8];
+    juce::TextButton mixerMuteBtns[8], mixerSoloBtns[8];
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixerFaderAtts[8], masterFaderAtt;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixerPanAtts[8];
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> mixerMuteAtts[8], mixerSoloAtts[8];
 
-    // --- TAB 5: FX MATRIX ---
-    juce::ToggleButton fxMatrixToggles[3][7];
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> fxMatrixAtts[3][7];
+    // --- TAB 5: FX MATRIX (3 Rows x 8 Columns) ---
+    juce::ToggleButton fxMatrixToggles[3][8];
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> fxMatrixAtts[3][8];
     juce::Label fxRowLabels[3];
-    juce::Label fxColLabels[7];
+    juce::Label fxColLabels[8];
 
     juce::Slider fxDriveSlider, fxToneSlider, fxDriveMixSlider;
     juce::Label  fxDriveLabel,  fxToneLabel,  fxDriveMixLabel;

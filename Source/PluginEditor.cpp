@@ -55,6 +55,10 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     setupKnob(hatsPitchSlider,     hatsPitchLabel,     "TUNE",   hatsPitchAtt,    "hats_pitch");
     setupKnob(hatsPanSlider,       hatsPanLabel,       "PAN",    hatsPanAtt,      "pan_ch");
 
+    setupKnob(cyDecaySlider,       cyDecayLabel,       "DECAY",  cyDecayAtt,      "cy_decay");
+    setupKnob(cyPitchSlider,       cyPitchLabel,       "TUNE",   cyPitchAtt,      "cy_pitch");
+    setupKnob(cyPanSlider,         cyPanLabel,         "PAN",    cyPanAtt,        "pan_cy");
+
     setupKnob(ltomDecaySlider,     ltomDecayLabel,     "DECAY", ltomDecayAtt,     "ltom_decay");
     setupKnob(ltomPitchSlider,     ltomPitchLabel,     "TUNE",  ltomPitchAtt,     "ltom_pitch");
     setupKnob(ltomPanSlider,       ltomPanLabel,       "PAN",   ltomPanAtt,       "pan_lt");
@@ -63,18 +67,19 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     setupKnob(htomPitchSlider,     htomPitchLabel,     "TUNE",  htomPitchAtt,     "htom_pitch");
     setupKnob(htomPanSlider,       htomPanLabel,       "PAN",   htomPanAtt,       "pan_ht");
 
-    // --- PADS TAB ---
-    const juce::String padTitles[7] = {
+    // --- PADS TAB (8 Drum Pads) ---
+    const juce::String padTitles[8] = {
         "BASS DRUM\n[A / 1]",
         "SNARE\n[S / 2]",
         "CLAP\n[D / 3]",
         "CLOSED HAT\n[F / 4]",
         "OPEN HAT\n[G / 5]",
-        "LOW TOM\n[H / 6]",
-        "HIGH TOM\n[J / 7]"
+        "CYMBAL\n[Y / 6]",
+        "LOW TOM\n[H / 7]",
+        "HIGH TOM\n[J / 8]"
     };
 
-    for (int v = 0; v < 7; ++v)
+    for (int v = 0; v < 8; ++v)
     {
         drumPads[v].setButtonText(padTitles[v]);
         drumPads[v].setComponentID("drumpad");
@@ -84,11 +89,11 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
         addAndMakeVisible(drumPads[v]);
     }
 
-    // --- MIXER TAB ---
-    const juce::String vNames[7] = { "bd", "sn", "cl", "ch", "oh", "lt", "ht" };
-    const juce::String vTitles[7] = { "BD", "SN", "CL", "CH", "OH", "LT", "HT" };
+    // --- MIXER TAB (8 Channels + Master) ---
+    const juce::String vNames[8] = { "bd", "sn", "cl", "ch", "oh", "cy", "lt", "ht" };
+    const juce::String vTitles[8] = { "BD", "SN", "CL", "CH", "OH", "CY", "LT", "HT" };
 
-    for (int v = 0; v < 7; ++v)
+    for (int v = 0; v < 8; ++v)
     {
         setupFader(mixerFaders[v], mixerFaderLabels[v], vTitles[v], mixerFaderAtts[v], "vol_" + vNames[v]);
         setupKnob(mixerPanDials[v], mixerPanLabels[v], "PAN", mixerPanAtts[v], "pan_" + vNames[v]);
@@ -105,7 +110,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     }
     setupFader(masterFader, masterFaderLabel, "MASTER", masterFaderAtt, "vol_master");
 
-    // --- SEQUENCER TAB ---
+    // --- SEQUENCER TAB (9 Tracks) ---
     transportToggleBtn.setButtonText("START");
     transportToggleBtn.setComponentID("transport");
     transportToggleBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff22c55e));
@@ -125,7 +130,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     clearBtn.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
     clearBtn.onClick = [this]()
     {
-        for (int t = 0; t < 8; ++t)
+        for (int t = 0; t < 9; ++t)
             for (int s = 0; s < 64; ++s)
                 audioProcessor.stepPattern[t][s].store(false);
         resized();
@@ -138,7 +143,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     copyPageBtn.onClick = [this]()
     {
         const int pageOffset = seqCurrentPage * 16;
-        for (int t = 0; t < 8; ++t)
+        for (int t = 0; t < 9; ++t)
             for (int s = 0; s < 16; ++s)
                 seqPageClipboard[t][s] = audioProcessor.stepPattern[t][pageOffset + s].load();
     };
@@ -150,7 +155,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     pastePageBtn.onClick = [this]()
     {
         const int pageOffset = seqCurrentPage * 16;
-        for (int t = 0; t < 8; ++t)
+        for (int t = 0; t < 9; ++t)
             for (int s = 0; s < 16; ++s)
                 audioProcessor.stepPattern[t][pageOffset + s].store(seqPageClipboard[t][s]);
         resized();
@@ -177,7 +182,8 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
 
     setupKnob(bpmSlider, bpmLabel, "TEMPO", bpmAtt, "seq_bpm");
 
-    for (int v = 0; v < 7; ++v)
+    // Track Mute & Solo on Sequencer (8 drum voices)
+    for (int v = 0; v < 8; ++v)
     {
         seqMuteBtns[v].setButtonText("M");
         seqMuteBtns[v].setClickingTogglesState(true);
@@ -190,8 +196,8 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
         seqSoloAtts[v] = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.apvts, "solo_" + vNames[v], seqSoloBtns[v]);
     }
 
-    const juce::String trackNames[8] = { "ACC", "BD", "SN", "CL", "CH", "OH", "LT", "HT" };
-    for (int t = 0; t < 8; ++t)
+    const juce::String trackNames[9] = { "ACC", "BD", "SN", "CL", "CH", "OH", "CY", "LT", "HT" };
+    for (int t = 0; t < 9; ++t)
     {
         trackLabels[t].setText(trackNames[t], juce::dontSendNotification);
         trackLabels[t].setFont(juce::Font(11.0f, juce::Font::bold));
@@ -208,7 +214,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
         }
     }
 
-    // --- FX TAB MATRIX ---
+    // --- FX TAB MATRIX (3 Rows x 8 Columns) ---
     const juce::String fxRowTitles[3] = { "DRIVE", "DELAY", "REVERB" };
     const juce::String fxRowIds[3]    = { "drive", "delay", "reverb" };
 
@@ -220,7 +226,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
         fxRowLabels[r].setJustificationType(juce::Justification::centredRight);
         addAndMakeVisible(fxRowLabels[r]);
 
-        for (int v = 0; v < 7; ++v)
+        for (int v = 0; v < 8; ++v)
         {
             auto& btn = fxMatrixToggles[r][v];
             btn.setButtonText("");
@@ -230,7 +236,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
         }
     }
 
-    for (int v = 0; v < 7; ++v)
+    for (int v = 0; v < 8; ++v)
     {
         fxColLabels[v].setText(vTitles[v], juce::dontSendNotification);
         fxColLabels[v].setFont(juce::Font(10.5f, juce::Font::bold));
@@ -450,13 +456,14 @@ bool Super606AudioProcessorEditor::keyPressed(const juce::KeyPress& key)
     auto keyChar = juce::CharacterFunctions::toLowerCase(key.getTextCharacter());
     int voiceToTrigger = -1;
 
-    if      (keyChar == 'a' || keyChar == '1' || keyChar == 'z') voiceToTrigger = 0;
-    else if (keyChar == 's' || keyChar == '2' || keyChar == 'x') voiceToTrigger = 1;
-    else if (keyChar == 'd' || keyChar == '3' || keyChar == 'c') voiceToTrigger = 2;
-    else if (keyChar == 'f' || keyChar == '4' || keyChar == 'v') voiceToTrigger = 3;
-    else if (keyChar == 'g' || keyChar == '5' || keyChar == 'b') voiceToTrigger = 4;
-    else if (keyChar == 'h' || keyChar == '6' || keyChar == 'n') voiceToTrigger = 5;
-    else if (keyChar == 'j' || keyChar == '7' || keyChar == 'm') voiceToTrigger = 6;
+    if      (keyChar == 'a' || keyChar == '1' || keyChar == 'z') voiceToTrigger = 0; // BD
+    else if (keyChar == 's' || keyChar == '2' || keyChar == 'x') voiceToTrigger = 1; // SN
+    else if (keyChar == 'd' || keyChar == '3' || keyChar == 'c') voiceToTrigger = 2; // CL
+    else if (keyChar == 'f' || keyChar == '4' || keyChar == 'v') voiceToTrigger = 3; // CH
+    else if (keyChar == 'g' || keyChar == '5' || keyChar == 'b') voiceToTrigger = 4; // OH
+    else if (keyChar == 'y' || keyChar == '6' || keyChar == 'n') voiceToTrigger = 5; // CY
+    else if (keyChar == 'h' || keyChar == '7' || keyChar == 'm') voiceToTrigger = 6; // LT
+    else if (keyChar == 'j' || keyChar == '8' || keyChar == ',') voiceToTrigger = 7; // HT
     else if (key.isKeyCurrentlyDown(juce::KeyPress::spaceKey))
     {
         bool playing = !(audioProcessor.seqIsPlaying.load() || audioProcessor.isDawPlaying.load());
@@ -505,14 +512,14 @@ void Super606AudioProcessorEditor::setupFader(juce::Slider& slider, juce::Label&
                                               const juce::String& paramID)
 {
     slider.setSliderStyle(juce::Slider::LinearVertical);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 42, 14);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 40, 14);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xff111215));
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
 
     label.setText(text, juce::dontSendNotification);
     label.setJustificationType(juce::Justification::centred);
-    label.setFont(juce::Font(11.0f, juce::Font::bold));
+    label.setFont(juce::Font(10.5f, juce::Font::bold));
     label.setColour(juce::Label::textColourId, juce::Colour(0xff111215));
     addAndMakeVisible(label);
 
@@ -626,7 +633,7 @@ void Super606AudioProcessorEditor::paint(juce::Graphics& g)
         {
             int visibleStep = activeStep - pageOffset;
             auto firstBtn = stepButtons[0][visibleStep].getBounds();
-            auto lastBtn  = stepButtons[7][visibleStep].getBounds();
+            auto lastBtn  = stepButtons[8][visibleStep].getBounds();
 
             auto colRect = juce::Rectangle<float>(static_cast<float>(firstBtn.getX() - 3),
                                                   static_cast<float>(firstBtn.getY() - 8),
@@ -686,6 +693,10 @@ void Super606AudioProcessorEditor::resized()
         hatsPitchSlider.setVisible(v); hatsPitchLabel.setVisible(v);
         hatsPanSlider.setVisible(v);   hatsPanLabel.setVisible(v);
 
+        cyDecaySlider.setVisible(v); cyDecayLabel.setVisible(v);
+        cyPitchSlider.setVisible(v); cyPitchLabel.setVisible(v);
+        cyPanSlider.setVisible(v);   cyPanLabel.setVisible(v);
+
         ltomDecaySlider.setVisible(v); ltomDecayLabel.setVisible(v);
         ltomPitchSlider.setVisible(v); ltomPitchLabel.setVisible(v);
         ltomPanSlider.setVisible(v);   ltomPanLabel.setVisible(v);
@@ -697,7 +708,7 @@ void Super606AudioProcessorEditor::resized()
 
     auto setPadsVisible = [this](bool v)
     {
-        for (int p = 0; p < 7; ++p) drumPads[p].setVisible(v);
+        for (int p = 0; p < 8; ++p) drumPads[p].setVisible(v);
     };
 
         auto setSeqVisible = [this](bool v)
@@ -707,12 +718,12 @@ void Super606AudioProcessorEditor::resized()
             for (int p = 0; p < 4; ++p) pageBtns[p].setVisible(v);
             seqLengthBox.setVisible(v);
             bpmSlider.setVisible(v); bpmLabel.setVisible(v);
-            for (int vIdx = 0; vIdx < 7; ++vIdx)
+            for (int vIdx = 0; vIdx < 8; ++vIdx)
             {
                 seqMuteBtns[vIdx].setVisible(v);
                 seqSoloBtns[vIdx].setVisible(v);
             }
-            for (int t = 0; t < 8; ++t)
+            for (int t = 0; t < 9; ++t)
             {
                 trackLabels[t].setVisible(v);
                 for (int s = 0; s < 16; ++s) stepButtons[t][s].setVisible(v);
@@ -721,7 +732,7 @@ void Super606AudioProcessorEditor::resized()
 
         auto setMixerVisible = [this](bool v)
         {
-            for (int vIdx = 0; vIdx < 7; ++vIdx)
+            for (int vIdx = 0; vIdx < 8; ++vIdx)
             {
                 mixerFaders[vIdx].setVisible(v); mixerFaderLabels[vIdx].setVisible(v);
                 mixerPanDials[vIdx].setVisible(v); mixerPanLabels[vIdx].setVisible(v);
@@ -735,9 +746,9 @@ void Super606AudioProcessorEditor::resized()
             for (int r = 0; r < 3; ++r)
             {
                 fxRowLabels[r].setVisible(v);
-                for (int col = 0; col < 7; ++col) fxMatrixToggles[r][col].setVisible(v);
+                for (int col = 0; col < 8; ++col) fxMatrixToggles[r][col].setVisible(v);
             }
-            for (int col = 0; col < 7; ++col) fxColLabels[col].setVisible(v);
+            for (int col = 0; col < 8; ++col) fxColLabels[col].setVisible(v);
 
             fxDriveSlider.setVisible(v); fxDriveLabel.setVisible(v);
             fxToneSlider.setVisible(v);  fxToneLabel.setVisible(v);
@@ -776,13 +787,14 @@ void Super606AudioProcessorEditor::resized()
         setSettingsVisible(currentTab == Tab::Settings);
 
         // ==========================================
-        // TAB 1: DRUMS
+        // TAB 1: DRUMS (Row 1: BD, SN, CL | Row 2: HATS, CY, LT, HT)
         // ==========================================
         if (currentTab == Tab::Drums)
         {
             const int tierH = (availH - 10) / 2;
             const int topY = topBarH;
 
+            // Row 1
             const int kickW  = static_cast<int>(availW * 0.38f);
             const int snareW = static_cast<int>(availW * 0.35f);
             const int clapW  = availW - kickW - snareW;
@@ -807,10 +819,12 @@ void Super606AudioProcessorEditor::resized()
             sections.push_back({ "CLAP", clapBounds });
             layoutSection(clapBounds, { {&clapDecaySlider, &clapDecayLabel}, {&clapPitchSlider, &clapPitchLabel}, {&clapNoiseSlider, &clapNoiseLabel}, {&clapPanSlider, &clapPanLabel} });
 
+            // Row 2
             const int botY = topY + tierH + 10;
-            const int hatsW = static_cast<int>(availW * 0.38f);
-            const int ltomW = static_cast<int>(availW * 0.31f);
-            const int htomW = availW - hatsW - ltomW;
+            const int hatsW = static_cast<int>(availW * 0.28f);
+            const int cyW   = static_cast<int>(availW * 0.24f);
+            const int ltomW = static_cast<int>(availW * 0.24f);
+            const int htomW = availW - hatsW - cyW - ltomW;
 
             x = marginX;
 
@@ -818,6 +832,11 @@ void Super606AudioProcessorEditor::resized()
             sections.push_back({ "HI-HATS", hatsBounds });
             layoutSection(hatsBounds, { {&hatsChDecaySlider, &hatsChDecayLabel}, {&hatsOhDecaySlider, &hatsOhDecayLabel}, {&hatsPitchSlider, &hatsPitchLabel}, {&hatsPanSlider, &hatsPanLabel} });
             x += hatsW;
+
+            auto cyBounds = juce::Rectangle<int>(x, botY, cyW, tierH);
+            sections.push_back({ "CYMBAL", cyBounds });
+            layoutSection(cyBounds, { {&cyDecaySlider, &cyDecayLabel}, {&cyPitchSlider, &cyPitchLabel}, {&cyPanSlider, &cyPanLabel} });
+            x += cyW;
 
             auto ltomBounds = juce::Rectangle<int>(x, botY, ltomW, tierH);
             sections.push_back({ "LOW TOM", ltomBounds });
@@ -829,7 +848,7 @@ void Super606AudioProcessorEditor::resized()
             layoutSection(htomBounds, { {&htomDecaySlider, &htomDecayLabel}, {&htomPitchSlider, &htomPitchLabel}, {&htomPanSlider, &htomPanLabel} });
         }
         // ==========================================
-        // TAB 2: PADS
+        // TAB 2: PADS (8 Drum Machine Pads)
         // ==========================================
         else if (currentTab == Tab::Pads)
         {
@@ -839,12 +858,12 @@ void Super606AudioProcessorEditor::resized()
             auto pArea = padsBounds;
             pArea.removeFromTop(28);
 
-            const int padW = pArea.getWidth() / 7;
-            for (int p = 0; p < 7; ++p)
-                drumPads[p].setBounds(pArea.removeFromLeft(padW).reduced(6, 12));
+            const int padW = pArea.getWidth() / 8;
+            for (int p = 0; p < 8; ++p)
+                drumPads[p].setBounds(pArea.removeFromLeft(padW).reduced(4, 12));
         }
         // ==========================================
-        // TAB 3: SEQUENCER
+        // TAB 3: SEQUENCER (9 Tracks: ACC + 8 Voices)
         // ==========================================
         else if (currentTab == Tab::Sequencer)
         {
@@ -876,12 +895,12 @@ void Super606AudioProcessorEditor::resized()
 
             const int gridY = topBarH + transportH + 4;
             const int gridH = availH - transportH - 4;
-            const int rowH = gridH / 8;
+            const int rowH = gridH / 9;
             const int trackHeaderW = 82;
             const int stepW = (availW - trackHeaderW - 16) / 16;
             const int pageOffset = seqCurrentPage * 16;
 
-            for (int t = 0; t < 8; ++t)
+            for (int t = 0; t < 9; ++t)
             {
                 const int y = gridY + (t * rowH);
                 auto headerArea = juce::Rectangle<int>(marginX, y, trackHeaderW, rowH);
@@ -915,7 +934,7 @@ void Super606AudioProcessorEditor::resized()
             }
         }
         // ==========================================
-        // TAB 4: MIXER
+        // TAB 4: MIXER (8 Voice Channels + Master)
         // ==========================================
         else if (currentTab == Tab::Mixer)
         {
@@ -925,30 +944,30 @@ void Super606AudioProcessorEditor::resized()
             auto mArea = mixerBounds;
             mArea.removeFromTop(26);
 
-            const int numStrips = 8;
+            const int numStrips = 9;
             const int stripW = mArea.getWidth() / numStrips;
 
-            for (int v = 0; v < 7; ++v)
+            for (int v = 0; v < 8; ++v)
             {
                 auto strip = mArea.removeFromLeft(stripW);
                 mixerPanLabels[v].setBounds(strip.removeFromTop(14));
-                mixerPanDials[v].setBounds(strip.removeFromTop(44).reduced(6, 0));
+                mixerPanDials[v].setBounds(strip.removeFromTop(44).reduced(4, 0));
 
                 auto btnRow = strip.removeFromBottom(22);
-                mixerMuteBtns[v].setBounds(btnRow.removeFromLeft(btnRow.getWidth() / 2).reduced(2, 1));
-                mixerSoloBtns[v].setBounds(btnRow.reduced(2, 1));
+                mixerMuteBtns[v].setBounds(btnRow.removeFromLeft(btnRow.getWidth() / 2).reduced(1, 1));
+                mixerSoloBtns[v].setBounds(btnRow.reduced(1, 1));
 
                 mixerFaderLabels[v].setBounds(strip.removeFromBottom(14));
-                mixerFaders[v].setBounds(strip.reduced(4, 2));
+                mixerFaders[v].setBounds(strip.reduced(3, 2));
             }
 
             auto masterStrip = mArea;
             masterStrip.removeFromTop(58);
             masterFaderLabel.setBounds(masterStrip.removeFromBottom(14));
-            masterFader.setBounds(masterStrip.reduced(6, 2));
+            masterFader.setBounds(masterStrip.reduced(4, 2));
         }
         // ==========================================
-        // TAB 5: FX RACK & MATRIX
+        // TAB 5: FX RACK & MATRIX (3 x 8 Routing Matrix)
         // ==========================================
         else if (currentTab == Tab::FX)
         {
@@ -960,11 +979,11 @@ void Super606AudioProcessorEditor::resized()
             mArea.removeFromTop(20);
 
             const int rowLabelW = 65;
-            const int colW = (mArea.getWidth() - rowLabelW) / 7;
+            const int colW = (mArea.getWidth() - rowLabelW) / 8;
 
             auto colHeaderArea = mArea.removeFromTop(14);
             colHeaderArea.removeFromLeft(rowLabelW);
-            for (int c = 0; c < 7; ++c)
+            for (int c = 0; c < 8; ++c)
                 fxColLabels[c].setBounds(colHeaderArea.removeFromLeft(colW));
 
             const int mRowH = mArea.getHeight() / 3;
@@ -973,7 +992,7 @@ void Super606AudioProcessorEditor::resized()
                 auto rowArea = mArea.removeFromTop(mRowH);
                 fxRowLabels[r].setBounds(rowArea.removeFromLeft(rowLabelW).reduced(2, 0));
 
-                for (int c = 0; c < 7; ++c)
+                for (int c = 0; c < 8; ++c)
                 {
                     auto cell = rowArea.removeFromLeft(colW);
                     fxMatrixToggles[r][c].setBounds(cell.reduced((cell.getWidth() - 18) / 2, (cell.getHeight() - 18) / 2));

@@ -13,14 +13,39 @@
 #include "Snare.hpp"
 #include "Toms.hpp"
 
-// Authentic 1980s 12-Bit Sampler Engine (26.04 kHz SP-1200 Clock Aliasing + 12-Bit DAC Quantization)
+// Authentic 1981 TR-606 Crash Cymbal Specification
+static constexpr SynthDrums606::HiHatSpec kCymbalSpec = {
+    SynthDrums606::kOpenHatPartials,
+    47,                  // partialCount
+    4000.0f,             // noiseHighPassHz
+    15500.0f,            // noiseLowPassHz
+    0.180f,              // tonalMix
+    0.820f,              // noiseMix
+    0.50f,               // saturationDrive
+    1.55f,               // outputTrim
+    0.0004f,             // attackTimeConstantSeconds
+    0.45f,               // clickAmount
+    0.005f,              // clickDecaySeconds
+    0.85f,               // bellAccentAmount
+    0.060f,              // bellAccentDecaySeconds
+    0.08f,               // envelopeFastWeight
+    0.040f,              // fastDecaySeconds
+    1.450f,              // slowDecaySeconds (long shimmering metallic cymbal decay)
+    true,                // decayScalesTimeConstants
+    95000.0f / 44100.0f, // reference duration
+    0.005f,              // minimumDecaySeconds
+    0.100f,              // minimumDurationSeconds
+    0.800f,              // gateFadeMaxSeconds
+    0.0012f,             // lineWobbleDepth
+    0.025f               // lineWobbleCorrelationSeconds
+};
+
+// Authentic 1980s 12-Bit Sampler Engine
 struct Vintage12BitSampler
 {
-    float holdL = 0.0f;
-    float holdR = 0.0f;
+    float holdL = 0.0f, holdR = 0.0f;
     double phase = 0.0;
-    float analogWarmthL = 0.0f;
-    float analogWarmthR = 0.0f;
+    float analogWarmthL = 0.0f, analogWarmthR = 0.0f;
 
     void reset()
     {
@@ -38,7 +63,6 @@ struct Vintage12BitSampler
         if (phase >= 1.0)
         {
             phase -= 1.0;
-
             float inL = std::tanh(left * 1.15f);
             float inR = std::tanh(right * 1.15f);
 
@@ -289,7 +313,7 @@ public:
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
-    double getTailLengthSeconds() const override { return 1.5; }
+    double getTailLengthSeconds() const override { return 1.8; }
 
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
@@ -302,8 +326,8 @@ public:
 
     void triggerVoice(int voiceIndex, bool accented = false);
 
-    // 8 Tracks (Track 0: ACC, Tracks 1-7: Drum Voices) x 64 Steps
-    std::atomic<bool> stepPattern[8][64];
+    // 9 Tracks (Track 0: ACC, Tracks 1-8: 8 Drum Voices) x 64 Steps
+    std::atomic<bool> stepPattern[9][64];
     std::atomic<int> currentSeqStep { 0 };
     std::atomic<bool> seqIsPlaying { false };
     std::atomic<bool> isDawPlaying { false };
@@ -333,22 +357,25 @@ private:
     std::atomic<float>* hatsOhDecayParam   = nullptr;
     std::atomic<float>* hatsPitchParam     = nullptr;
 
+    std::atomic<float>* cyDecayParam       = nullptr;
+    std::atomic<float>* cyPitchParam       = nullptr;
+
     std::atomic<float>* ltomDecayParam     = nullptr;
     std::atomic<float>* ltomPitchParam     = nullptr;
     std::atomic<float>* htomDecayParam     = nullptr;
     std::atomic<float>* htomPitchParam     = nullptr;
 
-    // Per-Voice Pans (7 Voices)
-    std::atomic<float>* voicePanParams[7]  = { nullptr };
+    // Per-Voice Pans (8 Voices: BD, SN, CL, CH, OH, CY, LT, HT)
+    std::atomic<float>* voicePanParams[8]  = { nullptr };
 
     // Mixer Channel Volumes, Mutes, Solos + Master Vol
-    std::atomic<float>* mixerVolParams[7]  = { nullptr };
-    std::atomic<float>* mixerMuteParams[7] = { nullptr };
-    std::atomic<float>* mixerSoloParams[7] = { nullptr };
+    std::atomic<float>* mixerVolParams[8]  = { nullptr };
+    std::atomic<float>* mixerMuteParams[8] = { nullptr };
+    std::atomic<float>* mixerSoloParams[8] = { nullptr };
     std::atomic<float>* masterVolParam     = nullptr;
 
-    // 3 x 7 FX Routing Matrix
-    std::atomic<float>* fxMatrixParams[3][7] = { { nullptr } };
+    // 3 x 8 FX Routing Matrix
+    std::atomic<float>* fxMatrixParams[3][8] = { { nullptr } };
 
     // FX Units
     std::atomic<float>* fxDriveParam       = nullptr;
@@ -376,13 +403,16 @@ private:
     std::atomic<float>* seqBpmParam        = nullptr;
     std::atomic<float>* seqLengthParam     = nullptr;
 
-    std::atomic<bool> manualTrigger[7];
-    std::atomic<bool> manualTriggerAccent[7];
-    float activeVoiceAccentGain[7];
+    std::atomic<bool> manualTrigger[8];
+    std::atomic<bool> manualTriggerAccent[8];
+    float activeVoiceAccentGain[8];
 
+    // 8 Dedicated Synthesizer Voice Engines
     SynthDrums606::BassDrumVoice bassDrum;
     SynthDrums606::ClapVoice clap;
-    SynthDrums606::MetalHiHatVoice hiHat;
+    SynthDrums606::MetalHiHatVoice closedHat;
+    SynthDrums606::MetalHiHatVoice openHat;
+    SynthDrums606::MetalHiHatVoice cymbal;
     SynthDrums606::SnareVoice snare;
     SynthDrums606::TomVoice lowTom;
     SynthDrums606::TomVoice highTom;

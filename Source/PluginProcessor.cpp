@@ -6,7 +6,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Super606AudioProcessor::crea
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     // --- Drum Voices ---
-    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("kick_transient", 1), "Kick Transient", 0.0f, 1.0f, 0.30f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("kick_transient", 1), "Kick Transient", 0.0f, 1.0f, 0.40f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("kick_decay",     1), "Kick Decay",     0.0f, 1.0f, 0.80f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("kick_tune",      1), "Kick Tuning",   -12.0f, 12.0f, 2.22f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("kick_heat",      1), "Kick Heat",     0.0f, 1.0f, 0.0f));
@@ -25,15 +25,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout Super606AudioProcessor::crea
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("hats_oh_decay", 1), "Open Hat Decay",   0.05f, 1.0f, 0.70f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("hats_pitch",    1), "Hi-Hat Pitch",     0.5f,  2.0f, 1.0f));
 
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("cy_decay", 1), "Cymbal Decay", 0.05f, 1.0f, 0.80f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("cy_pitch", 1), "Cymbal Pitch", 0.5f,  2.0f, 1.0f));
+
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("ltom_decay", 1), "Low Tom Decay", 0.05f, 1.0f, 0.80f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("ltom_pitch", 1), "Low Tom Pitch", 0.5f,  2.0f, 1.0f));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("htom_decay", 1), "High Tom Decay", 0.05f, 1.0f, 0.80f));
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("htom_pitch", 1), "High Tom Pitch", 0.5f,  2.0f, 1.0f));
 
-    // --- Per-Voice Pan & Mixer Channels ---
-    const juce::String vNames[7] = { "bd", "sn", "cl", "ch", "oh", "lt", "ht" };
-    for (int v = 0; v < 7; ++v)
+    // --- Per-Voice Pan & Mixer Channels (8 Voices: BD, SN, CL, CH, OH, CY, LT, HT) ---
+    const juce::String vNames[8] = { "bd", "sn", "cl", "ch", "oh", "cy", "lt", "ht" };
+    for (int v = 0; v < 8; ++v)
     {
         layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("pan_" + vNames[v], 1), "Pan " + vNames[v].toUpperCase(), -1.0f, 1.0f, 0.0f));
         layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("vol_" + vNames[v], 1), "Vol " + vNames[v].toUpperCase(), 0.0f, 1.5f, 1.0f));
@@ -42,11 +45,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout Super606AudioProcessor::crea
     }
     layout.add(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID("vol_master", 1), "Master Volume", 0.0f, 1.5f, 1.0f));
 
-    // --- 3 x 7 FX Routing Matrix ---
+    // --- 3 x 8 FX Routing Matrix ---
     const juce::String fxRowIds[3] = { "drive", "delay", "reverb" };
     for (int r = 0; r < 3; ++r)
     {
-        for (int v = 0; v < 7; ++v)
+        for (int v = 0; v < 8; ++v)
         {
             juce::String id = "route_" + fxRowIds[r] + "_" + vNames[v];
             bool defVal = (r == 2 && v == 0) ? false : true;
@@ -131,14 +134,17 @@ apvts(*this, nullptr, "Parameters", createParameterLayout())
     hatsOhDecayParam   = apvts.getRawParameterValue("hats_oh_decay");
     hatsPitchParam     = apvts.getRawParameterValue("hats_pitch");
 
+    cyDecayParam       = apvts.getRawParameterValue("cy_decay");
+    cyPitchParam       = apvts.getRawParameterValue("cy_pitch");
+
     ltomDecayParam     = apvts.getRawParameterValue("ltom_decay");
     ltomPitchParam     = apvts.getRawParameterValue("ltom_pitch");
 
     htomDecayParam     = apvts.getRawParameterValue("htom_decay");
     htomPitchParam     = apvts.getRawParameterValue("htom_pitch");
 
-    const juce::String vNames[7] = { "bd", "sn", "cl", "ch", "oh", "lt", "ht" };
-    for (int v = 0; v < 7; ++v)
+    const juce::String vNames[8] = { "bd", "sn", "cl", "ch", "oh", "cy", "lt", "ht" };
+    for (int v = 0; v < 8; ++v)
     {
         voicePanParams[v]  = apvts.getRawParameterValue("pan_" + vNames[v]);
         mixerVolParams[v]  = apvts.getRawParameterValue("vol_" + vNames[v]);
@@ -150,7 +156,7 @@ apvts(*this, nullptr, "Parameters", createParameterLayout())
 
     const juce::String fxRowIds[3] = { "drive", "delay", "reverb" };
     for (int r = 0; r < 3; ++r)
-        for (int v = 0; v < 7; ++v)
+        for (int v = 0; v < 8; ++v)
             fxMatrixParams[r][v] = apvts.getRawParameterValue("route_" + fxRowIds[r] + "_" + vNames[v]);
 
     fxDriveParam       = apvts.getRawParameterValue("fx_drive");
@@ -177,9 +183,9 @@ apvts(*this, nullptr, "Parameters", createParameterLayout())
     seqBpmParam        = apvts.getRawParameterValue("seq_bpm");
     seqLengthParam     = apvts.getRawParameterValue("seq_length");
 
-    for (int t = 0; t < 8; ++t)
+    for (int t = 0; t < 9; ++t)
     {
-        if (t < 7)
+        if (t < 8)
         {
             manualTrigger[t].store(false);
             manualTriggerAccent[t].store(false);
@@ -191,7 +197,7 @@ apvts(*this, nullptr, "Parameters", createParameterLayout())
 
 void Super606AudioProcessor::triggerVoice(int voiceIndex, bool accented)
 {
-    if (voiceIndex >= 0 && voiceIndex < 7)
+    if (voiceIndex >= 0 && voiceIndex < 8)
     {
         manualTriggerAccent[voiceIndex].store(accented);
         manualTrigger[voiceIndex].store(true);
@@ -206,7 +212,9 @@ void Super606AudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBl
 
     bassDrum.init(sampleRate);
     clap.init(sampleRate);
-    hiHat.init(sampleRate);
+    closedHat.init(sampleRate, 0x606606u);
+    openHat.init(sampleRate, 0x606607u);
+    cymbal.init(sampleRate, 0x606608u);
     snare.init(sampleRate, 0x6063u);
     lowTom.init(sampleRate, 0x6061u);
     highTom.init(sampleRate, 0x6062u);
@@ -221,7 +229,9 @@ void Super606AudioProcessor::releaseResources()
 {
     bassDrum.stop();
     clap.stop();
-    hiHat.stop();
+    closedHat.stop();
+    openHat.stop();
+    cymbal.stop();
     snare.stop();
     lowTom.stop();
     highTom.stop();
@@ -249,7 +259,6 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     double currentPpq = 0.0;
     bool hasPpq = false;
 
-    // 1. Read Host Transport & Timeline Position
     if (auto* playHead = getPlayHead())
     {
         if (auto posOpt = playHead->getPosition())
@@ -276,28 +285,40 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     {
         activeVoiceAccentGain[voiceIndex] = accented ? 1.88f : 1.0f;
 
-        if (voiceIndex == 0)
+        if (voiceIndex == 0) // Kick
         {
             const bool is608 = kickMode608Param != nullptr && kickMode608Param->load() > 0.5f;
-            const float trans = kickTransientParam != nullptr ? kickTransientParam->load() * (accented ? 1.45f : 1.0f) : 0.30f;
+            const float rawTrans = kickTransientParam != nullptr ? kickTransientParam->load() : 0.40f;
+            const float punch = std::pow(rawTrans, 0.75f) * (accented ? 1.50f : 1.0f);
             const float tune  = kickTuneParam != nullptr ? kickTuneParam->load() : 2.22f;
             const float decay = kickDecayParam != nullptr ? kickDecayParam->load() : 0.80f;
-            bassDrum.trigger(trans, is608 ? decay : decay * 0.45f, tune, 0.0f);
+            bassDrum.trigger(punch, is608 ? decay : decay * 0.45f, tune, 0.0f);
         }
-        else if (voiceIndex == 1)
+        else if (voiceIndex == 1) // Snare
         {
             const float snappy = snareSnappyParam != nullptr ? snareSnappyParam->load() * (accented ? 1.35f : 1.0f) : 0.75f;
             snare.trigger(snareDecayParam->load(), snarePitchParam->load(), snappy, snareColorParam->load());
         }
         else if (voiceIndex == 2) clap.trigger(clapDecayParam->load(), clapPitchParam->load(), clapNoiseParam->load());
-        else if (voiceIndex == 3) hiHat.trigger(SynthDrums606::kClosedHatSpec, hatsChDecayParam->load(), hatsPitchParam->load());
-        else if (voiceIndex == 4) hiHat.trigger(SynthDrums606::kOpenHatSpec, hatsOhDecayParam->load(), hatsPitchParam->load());
-        else if (voiceIndex == 5) lowTom.trigger(SynthDrums606::kLowTomSpec, ltomDecayParam->load(), ltomPitchParam->load());
-        else if (voiceIndex == 6) highTom.trigger(SynthDrums606::kHighTomSpec, htomDecayParam->load(), htomPitchParam->load());
+        else if (voiceIndex == 3) // Closed Hat (Chokes Open Hat!)
+        {
+            openHat.stop();
+            closedHat.trigger(SynthDrums606::kClosedHatSpec, hatsChDecayParam->load(), hatsPitchParam->load());
+        }
+        else if (voiceIndex == 4) // Open Hat
+        {
+            openHat.trigger(SynthDrums606::kOpenHatSpec, hatsOhDecayParam->load(), hatsPitchParam->load());
+        }
+        else if (voiceIndex == 5) // Cymbal
+        {
+            cymbal.trigger(kCymbalSpec, cyDecayParam->load(), cyPitchParam->load());
+        }
+        else if (voiceIndex == 6) lowTom.trigger(SynthDrums606::kLowTomSpec, ltomDecayParam->load(), ltomPitchParam->load());
+        else if (voiceIndex == 7) highTom.trigger(SynthDrums606::kHighTomSpec, htomDecayParam->load(), htomPitchParam->load());
     };
 
         bool anySolo = false;
-        for (int v = 0; v < 7; ++v)
+        for (int v = 0; v < 8; ++v)
         {
             if (mixerSoloParams[v] != nullptr && mixerSoloParams[v]->load() > 0.5f)
             {
@@ -306,11 +327,11 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             }
         }
 
-        bool voiceAudible[7];
-        float voiceGain[7];
-        float panL[7], panR[7];
+        bool voiceAudible[8];
+        float voiceGain[8];
+        float panL[8], panR[8];
 
-        for (int v = 0; v < 7; ++v)
+        for (int v = 0; v < 8; ++v)
         {
             bool isMuted  = mixerMuteParams[v] != nullptr && mixerMuteParams[v]->load() > 0.5f;
             bool isSoloed = mixerSoloParams[v] != nullptr && mixerSoloParams[v]->load() > 0.5f;
@@ -326,8 +347,8 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
         const float kickHeat = kickHeatParam != nullptr ? kickHeatParam->load() : 0.0f;
 
-        bool routeDrive[7], routeDelay[7], routeReverb[7];
-        for (int v = 0; v < 7; ++v)
+        bool routeDrive[8], routeDelay[8], routeReverb[8];
+        for (int v = 0; v < 8; ++v)
         {
             routeDrive[v]  = (fxMatrixParams[0][v] == nullptr || fxMatrixParams[0][v]->load() > 0.5f);
             routeDelay[v]  = (fxMatrixParams[1][v] == nullptr || fxMatrixParams[1][v]->load() > 0.5f);
@@ -345,7 +366,7 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
         for (int sample = 0; sample < totalNumSamples; ++sample)
         {
-            // 2. MIDI Real-Time Transport Commands (Start / Stop / Continue)
+            // 1. MIDI Real-Time Transport Commands (Start / Stop / Continue)
             for (; midiIterator != midiMessages.end() && (*midiIterator).samplePosition == sample; ++midiIterator)
             {
                 auto message = (*midiIterator).getMessage();
@@ -369,20 +390,20 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                 {
                     const int note = message.getNoteNumber();
                     bool accented = message.getVelocity() > 100;
-                    if (note == 35 || note == 36)      fireVoice(0, accented);
-                    else if (note == 38 || note == 40) fireVoice(1, accented);
-                    else if (note == 39)               fireVoice(2, accented);
-                    else if (note == 42 || note == 44) fireVoice(3, accented);
-                    else if (note == 46)               fireVoice(4, accented);
-                    else if (note == 41 || note == 45) fireVoice(5, accented);
-                    else if (note == 47 || note == 48 || note == 50) fireVoice(6, accented);
+                    if (note == 35 || note == 36)      fireVoice(0, accented); // Kick
+                    else if (note == 38 || note == 40) fireVoice(1, accented); // Snare
+                    else if (note == 39)               fireVoice(2, accented); // Clap
+                    else if (note == 42 || note == 44) fireVoice(3, accented); // CH
+                    else if (note == 46)               fireVoice(4, accented); // OH
+                    else if (note == 49 || note == 51) fireVoice(5, accented); // Cymbal
+                    else if (note == 41 || note == 45) fireVoice(6, accented); // Low Tom
+                    else if (note == 47 || note == 48 || note == 50) fireVoice(7, accented); // High Tom
                 }
             }
 
-            // 3. Sequencer Clock (Locked to DAW Timeline or Internal Clock)
+            // 2. Sequencer Step Logic
             if (dawPlaying && hasPpq)
             {
-                // Sample-accurate song position lock to DAW grid
                 double sampleFraction = static_cast<double>(sample) / static_cast<double>(totalNumSamples);
                 double exactPpq = currentPpq + (sampleFraction * totalNumSamples / sampleRate_) * (bpm / 60.0);
                 int step = static_cast<int>(std::floor(exactPpq * 4.0));
@@ -395,7 +416,7 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                     currentSeqStep.store(step);
 
                     bool accented = stepPattern[0][step].load();
-                    for (int track = 0; track < 7; ++track)
+                    for (int track = 0; track < 8; ++track)
                     {
                         if (stepPattern[track + 1][step].load())
                             fireVoice(track, accented);
@@ -404,7 +425,6 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             }
             else if (seqIsPlaying.load())
             {
-                // Internal Clock (Standalone or unlinked playback)
                 seqSampleCounter_ += 1.0;
                 if (seqSampleCounter_ >= samplesPer16th)
                 {
@@ -413,7 +433,7 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                     currentSeqStep.store(nextStep);
 
                     bool accented = stepPattern[0][nextStep].load();
-                    for (int track = 0; track < 7; ++track)
+                    for (int track = 0; track < 8; ++track)
                     {
                         if (stepPattern[track + 1][nextStep].load())
                             fireVoice(track, accented);
@@ -426,8 +446,8 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                 seqSampleCounter_ = 0.0;
             }
 
-            // 4. Manual UI Triggers
-            for (int track = 0; track < 7; ++track)
+            // 3. Manual UI Triggers
+            for (int track = 0; track < 8; ++track)
             {
                 if (manualTrigger[track].exchange(false))
                 {
@@ -436,8 +456,8 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                 }
             }
 
-            // 5. Synthesize voices
-            float v[7];
+            // 4. Synthesize 8 Independent Voice Engines
+            float v[8];
             v[0] = bassDrum.process();
 
             if (kickHeat > 0.001f)
@@ -448,17 +468,18 @@ void Super606AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
             v[1] = snare.process();
             v[2] = clap.process();
-            v[3] = hiHat.process();
-            v[4] = 0.0f;
-            v[5] = lowTom.process();
-            v[6] = highTom.process();
+            v[3] = closedHat.process();
+            v[4] = openHat.process();
+            v[5] = cymbal.process();
+            v[6] = lowTom.process();
+            v[7] = highTom.process();
 
             float dryL = 0.0f, dryR = 0.0f;
             float drvL = 0.0f, drvR = 0.0f;
             float dlyL = 0.0f, dlyR = 0.0f;
             float revL = 0.0f, revR = 0.0f;
 
-            for (int i = 0; i < 7; ++i)
+            for (int i = 0; i < 8; ++i)
             {
                 if (!voiceAudible[i]) continue;
 
@@ -617,7 +638,7 @@ void Super606AudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     }
 
     auto* seqXml = xml->createNewChildElement("SEQUENCER");
-    for (int t = 0; t < 8; ++t)
+    for (int t = 0; t < 9; ++t)
     {
         juce::String pat;
         for (int s = 0; s < 64; ++s)
@@ -654,7 +675,7 @@ void Super606AudioProcessor::setStateInformation(const void* data, int sizeInByt
 
         if (auto* seqXml = xml->getChildByName("SEQUENCER"))
         {
-            for (int t = 0; t < 8; ++t)
+            for (int t = 0; t < 9; ++t)
             {
                 juce::String pat = seqXml->getStringAttribute("track_" + juce::String(t), "0");
                 for (int s = 0; s < 64; ++s)
