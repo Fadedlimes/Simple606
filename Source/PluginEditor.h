@@ -324,6 +324,11 @@ public:
     void resized() override;
     bool keyPressed(const juce::KeyPress& key) override;
 
+    // Drag-paint overrides for the sequencer step grid
+    void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseUp  (const juce::MouseEvent& e) override;
+
 private:
     void timerCallback() override;
 
@@ -345,6 +350,10 @@ private:
                        const std::vector<std::pair<juce::Slider*, juce::Label*>>& knobs);
 
     void updateThemeColors();
+
+    // Sequencer drag-paint helpers
+    int  getStepIndexAt(juce::Point<int> pos, int& trackOut) const;
+    void paintStepAt(juce::Point<int> pos);
 
     Super606AudioProcessor& audioProcessor;
     Super606LookAndFeel customLookAndFeel;
@@ -392,6 +401,14 @@ private:
     // --- TAB 3: SEQUENCER (9 Tracks: ACC + 8 Voices) ---
     int seqCurrentPage = 0;
     bool seqPageClipboard[9][16] = { { false } };
+
+    // Drag-paint state
+    bool isPaintingSteps   = false;
+    bool paintTargetState  = false;
+    int  paintTrack        = -1;
+    int  lastPaintedStep   = -1;
+    bool paintLockedRow    = false;   // NEW: Ctrl/Cmd held → single-row painting
+
     juce::TextButton pageBtns[4];
     juce::ComboBox   seqLengthBox;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> seqLengthAtt;

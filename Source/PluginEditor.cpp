@@ -200,7 +200,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     for (int t = 0; t < 9; ++t)
     {
         trackLabels[t].setText(trackNames[t], juce::dontSendNotification);
-        trackLabels[t].setFont(juce::Font(11.0f, juce::Font::bold));
+        trackLabels[t].setFont(juce::Font(13.0f, juce::Font::bold));
         trackLabels[t].setColour(juce::Label::textColourId, t == 0 ? customLookAndFeel.accentTrackColour : juce::Colour(0xff111215));
         trackLabels[t].setJustificationType(juce::Justification::centredRight);
         addAndMakeVisible(trackLabels[t]);
@@ -221,7 +221,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     for (int r = 0; r < 3; ++r)
     {
         fxRowLabels[r].setText(fxRowTitles[r], juce::dontSendNotification);
-        fxRowLabels[r].setFont(juce::Font(10.5f, juce::Font::bold));
+        fxRowLabels[r].setFont(juce::Font(13.0f, juce::Font::bold));
         fxRowLabels[r].setColour(juce::Label::textColourId, juce::Colour(0xff111215));
         fxRowLabels[r].setJustificationType(juce::Justification::centredRight);
         addAndMakeVisible(fxRowLabels[r]);
@@ -239,7 +239,7 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     for (int v = 0; v < 8; ++v)
     {
         fxColLabels[v].setText(vTitles[v], juce::dontSendNotification);
-        fxColLabels[v].setFont(juce::Font(10.5f, juce::Font::bold));
+        fxColLabels[v].setFont(juce::Font(13.0f, juce::Font::bold));
         fxColLabels[v].setColour(juce::Label::textColourId, juce::Colour(0xff111215));
         fxColLabels[v].setJustificationType(juce::Justification::centred);
         addAndMakeVisible(fxColLabels[v]);
@@ -293,14 +293,14 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     addAndMakeVisible(themeColorBox);
     themeColorAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(audioProcessor.apvts, "ui_theme_color", themeColorBox);
     themeColorLabel.setText("THEME COLOR", juce::dontSendNotification);
-    themeColorLabel.setFont(juce::Font(10.5f, juce::Font::bold));
+    themeColorLabel.setFont(juce::Font(13.0f, juce::Font::bold));
     addAndMakeVisible(themeColorLabel);
 
     accentColorBox.addItemList({ "ORANGE", "YELLOW", "RED", "WHITE", "PURPLE" }, 1);
     addAndMakeVisible(accentColorBox);
     accentColorAtt = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(audioProcessor.apvts, "ui_accent_color", accentColorBox);
     accentColorLabel.setText("ACCENT TRACK COLOR", juce::dontSendNotification);
-    accentColorLabel.setFont(juce::Font(10.5f, juce::Font::bold));
+    accentColorLabel.setFont(juce::Font(13.0f, juce::Font::bold));
     addAndMakeVisible(accentColorLabel);
 
     global12BitToggle.setButtonText("12-BIT SAMPLER CRUNCH");
@@ -365,8 +365,8 @@ Super606AudioProcessorEditor::Super606AudioProcessorEditor(Super606AudioProcesso
     addAndMakeVisible(loadPresetBtn);
 
     setResizable(true, true);
-    setResizeLimits(880, 380, 1920, 1080);
-    setSize(960, 420);
+    setResizeLimits(880, 380, 2250, 1080);
+    setSize(2250, 650);
 
     startTimerHz(30);
 }
@@ -500,7 +500,7 @@ void Super606AudioProcessorEditor::setupKnob(juce::Slider& slider, juce::Label& 
 
     label.setText(text, juce::dontSendNotification);
     label.setJustificationType(juce::Justification::centred);
-    label.setFont(juce::Font(10.5f, juce::Font::bold));
+    label.setFont(juce::Font(13.0f, juce::Font::bold));
     label.setColour(juce::Label::textColourId, juce::Colour(0xff111215));
     addAndMakeVisible(label);
 
@@ -519,7 +519,7 @@ void Super606AudioProcessorEditor::setupFader(juce::Slider& slider, juce::Label&
 
     label.setText(text, juce::dontSendNotification);
     label.setJustificationType(juce::Justification::centred);
-    label.setFont(juce::Font(10.5f, juce::Font::bold));
+    label.setFont(juce::Font(13.0f, juce::Font::bold));
     label.setColour(juce::Label::textColourId, juce::Colour(0xff111215));
     addAndMakeVisible(label);
 
@@ -602,7 +602,7 @@ void Super606AudioProcessorEditor::paint(juce::Graphics& g)
         g.drawRoundedRectangle(headerRect, 8.0f, 1.2f);
 
         g.setColour(juce::Colour(0xff111215));
-        g.setFont(juce::Font(10.5f, juce::Font::bold));
+        g.setFont(juce::Font(13.0f, juce::Font::bold));
         g.drawText(sec.name, headerRect, juce::Justification::centred);
     }
 
@@ -620,7 +620,7 @@ void Super606AudioProcessorEditor::paint(juce::Graphics& g)
         g.setGradientFill(pride);
         g.fillRoundedRectangle(tRect.reduced(6.0f, 1.0f), 3.0f);
         g.setColour(juce::Colour(0xff111215));
-        g.setFont(juce::Font(10.5f, juce::Font::bold));
+        g.setFont(juce::Font(13.0f, juce::Font::bold));
         g.drawText("TRANS", tRect, juce::Justification::centred);
     }
 
@@ -926,10 +926,10 @@ void Super606AudioProcessorEditor::resized()
 
                     int actualStep = pageOffset + s;
                     btn.setToggleState(audioProcessor.stepPattern[t][actualStep].load(), juce::dontSendNotification);
-                    btn.onClick = [this, t, actualStep, s]()
-                    {
-                        audioProcessor.stepPattern[t][actualStep].store(stepButtons[t][s].getToggleState());
-                    };
+
+                    // Let the editor handle press/drag so we can paint across steps.
+                    btn.setInterceptsMouseClicks(false, false);
+                    btn.onClick = nullptr;
                 }
             }
         }
@@ -1077,4 +1077,109 @@ void Super606AudioProcessorEditor::resized()
 
             global12BitToggle.setBounds(vArea.removeFromTop(34).reduced(18, 2));
         }
+}
+
+// ============================================================
+// SEQUENCER DRAG-PAINT IMPLEMENTATION
+// ============================================================
+
+int Super606AudioProcessorEditor::getStepIndexAt(juce::Point<int> pos, int& trackOut) const
+{
+    trackOut = -1;
+
+    if (currentTab != Tab::Sequencer)
+        return -1;
+
+    // Mirror the geometry used in resized() for the step grid.
+    const int marginX      = 14;
+    const int topBarH      = 48;
+    const int transportH   = 50;
+    const int trackHeaderW = 82;
+    const int availW       = getWidth() - (marginX * 2);
+    const int availH       = getHeight() - topBarH - 12;
+    const int gridY        = topBarH + transportH + 4;
+    const int gridH        = availH - transportH - 4;
+    const int rowH         = gridH / 9;
+    const int stepW        = (availW - trackHeaderW - 16) / 16;
+
+    if (pos.x < marginX + trackHeaderW + 4) return -1;
+
+    const int relY = pos.y - gridY;
+    if (relY < 0 || relY >= rowH * 9) return -1;
+
+    const int track = relY / rowH;
+    trackOut = track;
+
+    // Walk the 16 steps in this row and find which one contains pos.x
+    for (int s = 0; s < 16; ++s)
+    {
+        int groupOffset = (s / 4) * 4;
+        int stepX = marginX + trackHeaderW + 4 + (s * stepW) + groupOffset;
+
+        if (pos.x >= stepX && pos.x < stepX + stepW)
+            return s;
+    }
+    return -1;
+}
+
+void Super606AudioProcessorEditor::paintStepAt(juce::Point<int> pos)
+{
+    int track = -1;
+    const int s = getStepIndexAt(pos, track);
+    if (s < 0 || track < 0) return;
+
+    // NEW: if the row is locked (Ctrl/Cmd held on mouse-down), ignore other rows.
+    if (paintLockedRow && track != paintTrack) return;
+
+    const int pageOffset = seqCurrentPage * 16;
+    const int actualStep = pageOffset + s;
+
+    if (track == paintTrack && s == lastPaintedStep) return; // no change
+
+    audioProcessor.stepPattern[track][actualStep].store(paintTargetState);
+    stepButtons[track][s].setToggleState(paintTargetState, juce::dontSendNotification);
+
+    paintTrack = track;
+    lastPaintedStep = s;
+    repaint();
+}
+
+void Super606AudioProcessorEditor::mouseDown(const juce::MouseEvent& e)
+{
+    if (currentTab != Tab::Sequencer) { AudioProcessorEditor::mouseDown(e); return; }
+
+    int track = -1;
+    const int s = getStepIndexAt(e.getPosition(), track);
+    if (s < 0 || track < 0) { AudioProcessorEditor::mouseDown(e); return; }
+
+    const int pageOffset = seqCurrentPage * 16;
+    const int actualStep = pageOffset + s;
+
+    // NEW: Ctrl (Win/Linux) or Cmd (macOS) → lock painting to this row only.
+    paintLockedRow = e.mods.isCommandDown() || e.mods.isCtrlDown();
+
+    // Toggle based on current state — subsequent dragged steps follow this
+    paintTargetState = ! audioProcessor.stepPattern[track][actualStep].load();
+    audioProcessor.stepPattern[track][actualStep].store(paintTargetState);
+    stepButtons[track][s].setToggleState(paintTargetState, juce::dontSendNotification);
+
+    isPaintingSteps = true;
+    paintTrack = track;
+    lastPaintedStep = s;
+    repaint();
+}
+
+void Super606AudioProcessorEditor::mouseDrag(const juce::MouseEvent& e)
+{
+    if (! isPaintingSteps) { AudioProcessorEditor::mouseDrag(e); return; }
+    paintStepAt(e.getPosition());
+}
+
+void Super606AudioProcessorEditor::mouseUp(const juce::MouseEvent& e)
+{
+    isPaintingSteps = false;
+    paintTrack = -1;
+    lastPaintedStep = -1;
+    paintLockedRow = false;   // NEW
+    AudioProcessorEditor::mouseUp(e);
 }
